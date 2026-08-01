@@ -30,6 +30,19 @@ function SubmittedValues({ values }: { values: ProjectionFormValues }) {
   );
 }
 
+function formatCurrency(value: string): string {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return value;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  }).format(numericValue);
+}
+
 export default function ProjectionResults({
   resultState
 }: ProjectionResultsProps) {
@@ -44,10 +57,55 @@ export default function ProjectionResults({
   }
 
   if (resultState.status === "ready") {
+    const { projection } = resultState;
+
     return (
       <section className="results-panel" aria-live="polite">
         <h2>Projection results</h2>
-        <p>Your projection results will appear here after backend integration.</p>
+        <dl className="submitted-values">
+          <div>
+            <dt>Projected balance</dt>
+            <dd>{formatCurrency(projection.projected_balance)}</dd>
+          </div>
+          <div>
+            <dt>Total contributions</dt>
+            <dd>{formatCurrency(projection.total_contributions)}</dd>
+          </div>
+          <div>
+            <dt>Estimated growth</dt>
+            <dd>{formatCurrency(projection.estimated_growth)}</dd>
+          </div>
+        </dl>
+
+        <h3>Yearly balances</h3>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projection.yearly_balances.map((entry) => (
+              <tr key={entry.year}>
+                <td>{entry.year}</td>
+                <td>{formatCurrency(entry.balance)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p>{projection.disclaimer}</p>
+        <SubmittedValues values={resultState.submittedValues} />
+      </section>
+    );
+  }
+
+  if (resultState.status === "error") {
+    return (
+      <section className="results-panel" aria-live="polite">
+        <h2>Projection unavailable</h2>
+        <p>{resultState.message}</p>
         <SubmittedValues values={resultState.submittedValues} />
       </section>
     );

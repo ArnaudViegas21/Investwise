@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createProjection } from "@/lib/api/projections";
 import ProjectionResults from "@/components/ProjectionResults";
 import type {
   ProjectionFieldName,
@@ -99,20 +100,41 @@ export default function ProjectionForm() {
     }));
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const currentErrors = validateProjectionForm(values);
 
-    if (hasValidationErrors(currentErrors)) {
+    if (hasValidationErrors(currentErrors) || resultState.status === "loading") {
       return;
     }
 
     const submittedValues = { ...values };
     setResultState({
-      status: "ready",
+      status: "loading",
       submittedValues
     });
+
+    try {
+      const projection = await createProjection(submittedValues);
+
+      setResultState({
+        status: "ready",
+        submittedValues,
+        projection
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "The projection request failed unexpectedly.";
+
+      setResultState({
+        status: "error",
+        submittedValues,
+        message
+      });
+    }
   }
 
   return (
@@ -147,8 +169,14 @@ export default function ProjectionForm() {
           );
         })}
 
-        <button className="button button-primary" disabled={isInvalid} type="submit">
-          Prepare projection
+        <button
+          className="button button-primary"
+          disabled={isInvalid || resultState.status === "loading"}
+          type="submit"
+        >
+          {resultState.status === "loading"
+            ? "Preparing projection..."
+            : "Prepare projection"}
         </button>
       </form>
 
