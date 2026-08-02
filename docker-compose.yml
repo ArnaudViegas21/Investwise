@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: investwise
+      POSTGRES_USER: investwise
+      POSTGRES_PASSWORD: investwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - investwise_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U investwise -d investwise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  investwise_postgres_data:

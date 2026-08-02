@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
-from app.database.session import Base
+from app.database.session import Base, get_connect_args
 from app.models import FinancialGoal
 
 config = context.config
@@ -31,10 +31,12 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    database_url = get_settings().database_url
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=get_connect_args(database_url),
     )
 
     with connectable.connect() as connection:

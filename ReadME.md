@@ -28,3 +28,32 @@ Run backend tests:
 ```powershell
 pytest
 ```
+
+## Local Database
+
+Start PostgreSQL:
+
+```powershell
+docker compose up -d
+docker compose ps
+```
+
+Apply database migrations and run the API:
+
+```powershell
+cd backend
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload
+```
+
+Stop PostgreSQL:
+
+```powershell
+docker compose down
+```
+
+To stop PostgreSQL and delete local database data, run:
+
+```powershell
+docker compose down -v
+```
