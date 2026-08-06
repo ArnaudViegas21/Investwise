@@ -20,6 +20,8 @@ const initialValues: ProjectionFormValues = {
 type NumericFieldConfig = {
   name: ProjectionFieldName;
   label: string;
+  helper: string;
+  suffix?: string;
   min?: number;
   max?: number;
   step?: number;
@@ -29,24 +31,31 @@ const fieldConfigs: NumericFieldConfig[] = [
   {
     name: "initialInvestment",
     label: "Initial investment",
+    helper: "Starting balance for this hypothetical projection.",
+    suffix: "EUR",
     min: 0,
     step: 100
   },
   {
     name: "monthlyContribution",
     label: "Monthly contribution",
+    helper: "Planned recurring contribution sent to the projection API.",
+    suffix: "EUR",
     min: 0,
     step: 25
   },
   {
     name: "annualReturn",
     label: "Estimated annual return percentage",
+    helper: "Hypothetical annual return assumption.",
+    suffix: "%",
     min: -100,
     step: 0.1
   },
   {
     name: "years",
     label: "Investment period in years",
+    helper: "Projection horizon between 1 and 80 years.",
     min: 1,
     max: 80,
     step: 1
@@ -140,28 +149,39 @@ export default function ProjectionForm() {
   return (
     <div className="calculator-grid">
       <form className="projection-form" onSubmit={handleSubmit} noValidate>
+        <div className="section-heading">
+          <p className="eyebrow">Inputs</p>
+          <h2>Projection assumptions</h2>
+        </div>
         {fieldConfigs.map((field) => {
           const inputId = `projection-${field.name}`;
           const errorId = `${inputId}-error`;
+          const helperId = `${inputId}-helper`;
           const errorMessage = validationErrors[field.name];
 
           return (
             <div className="form-field" key={field.name}>
               <label htmlFor={inputId}>{field.label}</label>
-              <input
-                aria-describedby={errorMessage ? errorId : undefined}
-                aria-invalid={Boolean(errorMessage)}
-                id={inputId}
-                max={field.max}
-                min={field.min}
-                name={field.name}
-                onChange={(event) =>
-                  handleValueChange(field.name, event.target.value)
-                }
-                step={field.step}
-                type="number"
-                value={values[field.name]}
-              />
+              <p className="field-helper" id={helperId}>
+                {field.helper}
+              </p>
+              <div className="input-shell">
+                <input
+                  aria-describedby={`${helperId} ${errorId}`}
+                  aria-invalid={Boolean(errorMessage)}
+                  id={inputId}
+                  max={field.max}
+                  min={field.min}
+                  name={field.name}
+                  onChange={(event) =>
+                    handleValueChange(field.name, event.target.value)
+                  }
+                  step={field.step}
+                  type="number"
+                  value={values[field.name]}
+                />
+                {field.suffix ? <span>{field.suffix}</span> : null}
+              </div>
               <p className="field-error" id={errorId}>
                 {errorMessage ?? ""}
               </p>

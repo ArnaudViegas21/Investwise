@@ -1,3 +1,7 @@
+import Link from "next/link";
+import ProjectionChart from "@/components/ProjectionChart";
+import SkeletonCard from "@/components/SkeletonCard";
+import { formatCurrency } from "@/lib/format";
 import type {
   ProjectionFormValues,
   ProjectionResultState
@@ -12,11 +16,11 @@ function SubmittedValues({ values }: { values: ProjectionFormValues }) {
     <dl className="submitted-values">
       <div>
         <dt>Initial investment</dt>
-        <dd>${values.initialInvestment.toLocaleString()}</dd>
+        <dd>{formatCurrency(values.initialInvestment)}</dd>
       </div>
       <div>
         <dt>Monthly contribution</dt>
-        <dd>${values.monthlyContribution.toLocaleString()}</dd>
+        <dd>{formatCurrency(values.monthlyContribution)}</dd>
       </div>
       <div>
         <dt>Estimated annual return</dt>
@@ -30,17 +34,15 @@ function SubmittedValues({ values }: { values: ProjectionFormValues }) {
   );
 }
 
-function formatCurrency(value: string): string {
-  const numericValue = Number(value);
+function getSaveGoalHref(values: ProjectionFormValues): string {
+  const params = new URLSearchParams({
+    currentAmount: String(values.initialInvestment),
+    monthlyContribution: String(values.monthlyContribution),
+    annualReturnRate: String(values.annualReturn),
+    years: String(values.years)
+  });
 
-  if (!Number.isFinite(numericValue)) {
-    return value;
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD"
-  }).format(numericValue);
+  return `/goals/new?${params.toString()}`;
 }
 
 export default function ProjectionResults({
@@ -51,6 +53,7 @@ export default function ProjectionResults({
       <section className="results-panel" aria-live="polite">
         <h2>Preparing projection</h2>
         <p>Your projection request is being prepared.</p>
+        <SkeletonCard variant="chart" />
         <SubmittedValues values={resultState.submittedValues} />
       </section>
     );
@@ -62,7 +65,7 @@ export default function ProjectionResults({
     return (
       <section className="results-panel" aria-live="polite">
         <h2>Projection results</h2>
-        <dl className="submitted-values">
+        <dl className="submitted-values results-grid">
           <div>
             <dt>Projected balance</dt>
             <dd>{formatCurrency(projection.projected_balance)}</dd>
@@ -77,26 +80,30 @@ export default function ProjectionResults({
           </div>
         </dl>
 
-        <h3>Yearly balances</h3>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Year</th>
-              <th scope="col">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projection.yearly_balances.map((entry) => (
-              <tr key={entry.year}>
-                <td>{entry.year}</td>
-                <td>{formatCurrency(entry.balance)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ProjectionChart
+          title="Calculator projection"
+          yearlyBalances={projection.yearly_balances}
+        />
 
-        <p>{projection.disclaimer}</p>
+        <div className="breakdown-grid" aria-label="Contribution versus growth">
+          <article>
+            <span>Total contributions</span>
+            <strong>{formatCurrency(projection.total_contributions)}</strong>
+          </article>
+          <article>
+            <span>Estimated growth</span>
+            <strong>{formatCurrency(projection.estimated_growth)}</strong>
+          </article>
+        </div>
+
+        <p className="disclaimer">{projection.disclaimer}</p>
         <SubmittedValues values={resultState.submittedValues} />
+        <Link
+          className="button button-primary"
+          href={getSaveGoalHref(resultState.submittedValues)}
+        >
+          Save as goal
+        </Link>
       </section>
     );
   }
